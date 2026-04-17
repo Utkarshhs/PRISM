@@ -1,0 +1,254 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #0a0f1e;
+  --surface: #111827;
+  --card: #1a2235;
+  --border: #1e293b;
+  --accent: #3b82f6;
+  --text-primary: #ffffff;
+  --text-muted: #e2e8f0;
+  --text-subtle: #cbd5e1;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--bg);
+  color: var(--text-primary);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-image: url('/main-page-bg.png');
+  background-attachment: fixed;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(10, 15, 30, 0.4);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* ── Selection ── */
+::selection {
+  background: rgba(59, 130, 246, 0.3);
+  color: #f1f5f9;
+}
+
+/* ── Utility classes ── */
+.card {
+  background: rgba(26, 34, 53, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.card-hover {
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+.card-hover:hover {
+  border-color: #334155;
+  transform: translateY(-1px);
+}
+
+.glass {
+  background: rgba(26, 34, 53, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, #0f172a 0%, #0a0f1e 100%);
+}
+
+/* ── Glow effects ── */
+.glow-blue {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+}
+.glow-green {
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
+}
+.glow-red {
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+}
+
+/* ── Skeleton loading ── */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--card) 25%,
+    #1e293b 50%,
+    var(--card) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Animated underline ── */
+.nav-link {
+  position: relative;
+}
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--accent);
+  transition: width 0.25s ease;
+}
+.nav-link:hover::after,
+.nav-link.active::after {
+  width: 100%;
+}
+
+/* ── D3 graph styles ── */
+.node circle {
+  cursor: pointer;
+  transition: r 0.2s ease;
+}
+.node circle:hover {
+  r: 10;
+}
+.link {
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-linecap: round;
+}
+
+/* ── Recharts overrides ── */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: rgba(255, 255, 255, 0.04);
+}
+.recharts-tooltip-wrapper {
+  outline: none;
+}
+
+/* ── Demo center pipeline ── */
+.stage-card {
+  position: relative;
+  overflow: hidden;
+}
+.stage-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, transparent, #3b82f6, transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.stage-card.active::before {
+  opacity: 1;
+}
+
+/* ── Animated gradient border ── */
+@keyframes borderRotate {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animated-border {
+  position: relative;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6, #06b6d4);
+  background-size: 300% 300%;
+  animation: borderRotate 4s ease infinite;
+  padding: 1px;
+  border-radius: 0.75rem;
+}
+
+/* ── Pulse dot ── */
+.pulse-dot {
+  position: relative;
+}
+.pulse-dot::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.3;
+  animation: pulse-ring 1.5s ease-out infinite;
+}
+@keyframes pulse-ring {
+  0% { transform: scale(0.8); opacity: 0.5; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+/* ── Sentiment bars ── */
+.sentiment-bar {
+  transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── Feature pills ── */
+.feature-pill {
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+.feature-pill:hover {
+  transform: scale(1.05);
+}
+.feature-pill.active {
+  box-shadow: 0 0 0 2px currentColor;
+}
+
+/* ── Noise texture overlay ── */
+.noise {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+}
