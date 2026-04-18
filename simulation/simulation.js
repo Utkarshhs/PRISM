@@ -138,8 +138,12 @@ function renderProductPanel(product, platform) {
         <div class="prism-form" id="form-${product.product_id}">
           <div class="prism-form-row">
             <div class="prism-form-group">
-              <label>Your Name / Email</label>
-              <input type="text" id="inp-user-${product.product_id}" placeholder="your@email.com">
+              <label>Your Name</label>
+              <input type="text" id="inp-user-${product.product_id}" placeholder="Your name">
+            </div>
+            <div class="prism-form-group">
+              <label>Your email (for follow-up)</label>
+              <input type="email" id="review-email" placeholder="Your email (for follow-up)" required />
             </div>
             <div class="prism-form-group">
               <label>Rating</label>
@@ -228,17 +232,20 @@ function setStar(productId, n) {
 /* ── Submit review ───────────────────────────────────────────────── */
 async function submitReview(productId, platform) {
   const userId = document.getElementById(`inp-user-${productId}`)?.value.trim();
+  const email = document.getElementById('review-email')?.value.trim();
   const text = document.getElementById(`inp-text-${productId}`)?.value.trim();
   const ratingVal = parseInt(document.getElementById(`star-${productId}`)?.dataset.val || '0');
   const status = document.getElementById(`status-${productId}`);
 
-  if (!userId) { showStatus(status, 'warning', 'Please enter your name or email.'); return; }
+  if (!userId) { showStatus(status, 'warning', 'Please enter your name.'); return; }
+  if (!email) { showStatus(status, 'warning', 'Please enter your email for follow-up.'); return; }
   if (!text) { showStatus(status, 'warning', 'Please write a review.'); return; }
   if (!ratingVal) { showStatus(status, 'warning', 'Please select a star rating.'); return; }
 
   const review = {
     product_id: productId, platform, review_text: text,
     transcript: null, rating: ratingVal, user_id: userId,
+    email,
     media_type: 'none', timestamp: 'just now'
   };
 
@@ -259,6 +266,8 @@ async function submitReview(productId, platform) {
 
   // Reset form
   document.getElementById(`inp-user-${productId}`).value = '';
+  const emailInp = document.getElementById('review-email');
+  if (emailInp) emailInp.value = '';
   document.getElementById(`inp-text-${productId}`).value = '';
   setStar(productId, 0);
   document.getElementById(`star-${productId}`).dataset.val = '0';

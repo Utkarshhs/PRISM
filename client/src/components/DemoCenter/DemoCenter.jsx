@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { io } from 'socket.io-client';
 import { runDemoPipeline } from '../../api';
 
 const STAGES = [
@@ -19,21 +20,40 @@ const SAMPLE_REVIEW = {
     'Sound is great but battery dies in 3 hours ANC on. Box arrived crushed, very disappointed with packaging.',
   rating: 2,
   user_id: 'demo_user_1',
+  email: 'judge@example.com',
   media_type: 'none',
   timestamp: new Date().toISOString(),
 };
+
+function formatFeatureList(keys) {
+  if (!keys || !keys.length) return '—';
+  return keys.join(', ');
+}
 
 export default function DemoCenter({ onHealthDelta, leaderboard = [], productNames = {} }) {
   const [running, setRunning] = useState(false);
   const [stageState, setStageState] = useState({});
   const [doneInfo, setDoneInfo] = useState(null);
   const [error, setError] = useState(null);
+  const [surveySummary, setSurveySummary] = useState(null);
+
+  useEffect(() => {
+    const socket = io({
+      path: '/socket.io',
+      withCredentials: true,
+    });
+    socket.on('survey:summary', (data) => {
+      setSurveySummary(data);
+    });
+    return () => socket.disconnect();
+  }, []);
 
   async function run() {
     setRunning(true);
     setStageState({});
     setDoneInfo(null);
     setError(null);
+    setSurveySummary(null);
 
     try {
       const res = await runDemoPipeline(SAMPLE_REVIEW);
@@ -126,6 +146,82 @@ export default function DemoCenter({ onHealthDelta, leaderboard = [], productNam
           {STAGES.map((s) => {
             const st = stageState[s.n];
             const active = !!st;
+
+            if (s.n === 7) {
+              const sent = st?.status === 'sent';
+              const email = st?.respondent_email || '—';
+              const features = st?.gemini_feature_focus || [];
+              const showSummary =
+                surveySummary &&
+                sent &&
+                (!st?.respondent_email || surveySummary.respondent_email === st.respondent_email);
+
+              return (
+                <motion.div
+                  key={s.n}
+                  initial={false}
+                  animate={{
+                    opacity: active ? 1 : 0.45,
+                    scale: active ? 1 : 0.98,
+                    borderColor: active ? 'rgba(56, 189, 248, 0.5)' : 'rgba(51, 65, 85, 1)',
+                  }}
+                  transition={{ type: 'spring', stiffness: 260, damping: 22, delay: active ? 0 : 0 }}
+                  className="rounded-xl border bg-slate-900/40 p-4"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-sm font-bold text-sky-300">
+                        {s.n}
+                      </span>
+                      <span className="text-sm font-medium text-slate-200">{s.name}</span>
+                    </div>
+                    {sent && (
+                      <span className="shrink-0 rounded-full border border-emerald-500/40 bg-emerald-950/50 px-2 py-0.5 text-[10px] font-medium text-emerald-300">
+                        ✉ delivered
+                      </span>
+                    )}
+                  </div>
+
+                  {sent && (
+                    <div className="mt-3 space-y-2 text-xs text-slate-300">
+                      <p>
+                        <span className="text-slate-500">Survey sent to:</span>{' '}
+                        <span className="text-sky-200">{email}</span>
+                      </p>
+                      <p>
+                        <span className="text-slate-500">Gemini questions based on:</span>{' '}
+                        <span className="text-slate-200">{formatFeatureList(features)}</span>
+                      </p>
+                      <div className="my-3 border-t border-slate-700/80" />
+                      {!showSummary && (
+                        <div className="flex items-center gap-2">
+                          <motion.span
+                            className="inline-block h-2 w-2 rounded-full bg-sky-400"
+                            animate={{ opacity: [0.35, 1, 0.35] }}
+                            transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+                          />
+                          <span className="text-sky-300/90">Awaiting response…</span>
+                        </div>
+                      )}
+                      {showSummary && (
+                        <div className="space-y-2">
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                            Response received
+                          </p>
+                          <p className="text-sm leading-relaxed text-slate-200">{surveySummary.summary}</p>
+                          <p className="text-[11px] text-emerald-400/90">Confidence signal: updated</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {!active && (
+                    <p className="mt-3 text-xs text-slate-600">Run the pipeline to activate this stage.</p>
+                  )}
+                </motion.div>
+              );
+            }
+
             return (
               <motion.div
                 key={s.n}

@@ -16,7 +16,7 @@ const timeseries = require('./timeseries');
 const confidence = require('./confidence');
 const feedback = require('./feedback');
 
-async function runPipeline(reviewId) {
+async function runPipeline(reviewId, options = {}) {
   const review = await Review.findByPk(reviewId);
   if (!review) throw new Error(`Review ${reviewId} not found`);
 
@@ -90,10 +90,21 @@ async function runPipeline(reviewId) {
     const confResult = await confidence.process(review.product_id);
     console.log(`[Pipeline] Stage 6 done — ${confResult.insights_updated} insights updated`);
 
-    // Stage 7 — Feedback (only for high-confidence negative issues)
-    if (confResult.top_issues && confResult.top_issues.some(i => i.confidence > 0.6)) {
-      const fbResult = await feedback.process(review.toJSON(), extractResult);
-      console.log(`[Pipeline] Stage 7 done — ${fbResult.surveys.length} surveys generated`);
+    // Stage 7 — Adaptive Feedback (ingest only; async, non-blocking)
+    if (options.fromIngest) {
+      const respondentEmail = feedback.pickRespondentEmail(review.user_id, options.respondentEmail);
+      if (respondentEmail) {
+        feedback.runAdaptiveFeedback({
+          review: review.toJSON(),
+          normalizedText: normalizeResult.normalized_text,
+          features: extractResult.features,
+          productName: feedback.getProductName(review.product_id),
+          respondentEmail,
+        });
+        console.log(`[Pipeline] Stage 7 scheduled — adaptive feedback email to ${respondentEmail}`);
+      } else {
+        console.log(`[Pipeline] Stage 7 skipped — no respondent email`);
+      }
     }
 
     console.log(`[Pipeline] Complete for review ${reviewId}`);
