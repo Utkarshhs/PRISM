@@ -6,7 +6,8 @@
 const { Review } = require('../models');
 const { Alert } = require('../models');
 const { v4: uuidv4 } = require('uuid');
-const { emitAlert } = require('../utils/socket');
+const { emitAlert, emitReviewProcessed } = require('../utils/socket');
+const { invalidateProduct } = require('../utils/dashboardCache');
 
 const normalize = require('./normalize');
 const trust = require('./trust');
@@ -123,9 +124,21 @@ async function runPipeline(reviewId, options = {}) {
     }
 
     console.log(`[Pipeline] Complete for review ${reviewId}`);
+
+    // Invalidate dashboard cache for this product (async rebuild)
+    invalidateProduct(review.product_id).catch(() => {});
+
+    // Emit real-time processed event for Demo Center
+    emitReviewProcessed({
+      review_id: reviewId,
+      product_id: review.product_id,
+      status: 'processed',
+    });
   } catch (err) {
     console.error(`[Pipeline] Error at review ${reviewId}:`, err);
     await review.update({ status: 'processed' }); // Don't block on pipeline errors
+    // Still invalidate cache on error so stale data doesn't linger
+    invalidateProduct(review.product_id).catch(() => {});
   }
 }
 

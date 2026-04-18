@@ -1,6 +1,7 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { Review } = require('../models');
+const { emitNewReview } = require('../utils/socket');
 
 const router = express.Router();
 
@@ -42,6 +43,17 @@ router.post('/ingest', async (req, res) => {
       media_type,
       timestamp: timestamp || new Date().toISOString(),
       status: 'queued',
+    });
+
+    // Emit real-time new review event for Demo Center alerts
+    emitNewReview({
+      review_id: review.id,
+      product_id,
+      platform,
+      rating,
+      preview_text: (review_text || transcript || '').slice(0, 120),
+      user_id,
+      timestamp: review.timestamp,
     });
 
     // Trigger pipeline asynchronously — don't block the response

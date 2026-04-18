@@ -18,6 +18,7 @@ const alertRoutes = require('./routes/alerts');
 const demoRoutes = require('./routes/demo');
 const reportRoutes = require('./routes/reports');
 const surveyRoutes = require('./routes/survey');
+const settingsRoutes = require('./routes/settings');
 
 const app = express();
 const server = http.createServer(app);
@@ -54,6 +55,7 @@ app.use('/api/dashboard', authMiddleware, dashboardRoutes);
 app.use('/api/alerts', authMiddleware, alertRoutes);
 app.use('/api/demo', authMiddleware, demoRoutes);
 app.use('/api/reports', authMiddleware, reportRoutes);
+app.use('/api/settings', authMiddleware, settingsRoutes);
 
 // Static files for reports
 app.use('/reports', express.static(path.join(__dirname, 'reports')));
@@ -77,6 +79,14 @@ async function start() {
       console.log('[Embeddings] Model loaded and anchor embeddings cached');
     }).catch(err => {
       console.warn('[Embeddings] Failed to load model (pipeline will fallback):', err.message);
+    });
+
+    // Warm dashboard cache (preprocess all review data)
+    const { warmAll } = require('./utils/dashboardCache');
+    warmAll().then(() => {
+      console.log('[Cache] Dashboard data preprocessed and ready');
+    }).catch(err => {
+      console.warn('[Cache] Dashboard cache warmup failed (will compute on demand):', err.message);
     });
 
     server.listen(PORT, () => {

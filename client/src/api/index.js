@@ -59,3 +59,17 @@ export async function runDemoPipeline(review) {
     body: JSON.stringify({ review }),
   });
 }
+
+export async function setGeminiKey(apiKey) {
+  return fetch('/api/settings/gemini-key', {
+    method: 'POST',
+    credentials: 'include',
+    headers: jsonHeaders,
+    body: JSON.stringify({ api_key: apiKey }),
+  });
+}
+
+export async function getGeminiKeyStatus() {
+  return fetch('/api/settings/gemini-key/status', { credentials: 'include' });
+}
+

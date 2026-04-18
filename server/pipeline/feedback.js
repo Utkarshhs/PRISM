@@ -20,9 +20,78 @@ function stripCodeFences(text) {
   return t.trim();
 }
 
-function buildFallbackQuestions(features) {
+function buildFallbackQuestions(features, normalizedText) {
+  const text = (normalizedText || '').toLowerCase();
   const keys = Object.keys(features || {});
   const label = keys.length ? keys[0].replace(/_/g, ' ') : 'this product';
+
+  // Context-aware keyword matching for when Gemini is unavailable
+  if (/blast|explod|burst|fire|burn|smoke|overheat/i.test(text)) {
+    return [
+      { question: `What were you doing when the ${label} issue occurred?`, type: 'text' },
+      { question: `Was the product exposed to extreme heat or pressure?`, type: 'yesno' },
+      { question: `How long had you been using the product before this happened?`, type: 'text' },
+      { question: `How would you rate the severity of the issue?`, type: 'rating' },
+    ];
+  }
+  if (/connect|bluetooth|bt|pair|disconnect|drop/i.test(text)) {
+    return [
+      { question: `What phone model and OS version are you using?`, type: 'text' },
+      { question: `Do you know your device's Bluetooth version?`, type: 'text' },
+      { question: `Does the issue happen in a specific location or distance?`, type: 'text' },
+      { question: `How frequently does the disconnection occur?`, type: 'rating' },
+    ];
+  }
+  if (/battery|charge|charging|drain|power|dies/i.test(text)) {
+    return [
+      { question: `How many hours does the battery last on a single charge?`, type: 'text' },
+      { question: `Do you use features like ANC or high volume regularly?`, type: 'yesno' },
+      { question: `How old is the product (approximate weeks of use)?`, type: 'text' },
+      { question: `Rate your satisfaction with charging speed`, type: 'rating' },
+    ];
+  }
+  if (/noise|crackling|static|buzz|hiss|sound quality/i.test(text)) {
+    return [
+      { question: `Does the audio issue happen with all content or specific types?`, type: 'text' },
+      { question: `Have you tried using a different audio source?`, type: 'yesno' },
+      { question: `At what volume level does the issue become noticeable?`, type: 'text' },
+      { question: `Rate the overall sound quality excluding this issue`, type: 'rating' },
+    ];
+  }
+  if (/deliver|package|packag|ship|damage|dent|crush|box/i.test(text)) {
+    return [
+      { question: `Was the product itself damaged or just the outer packaging?`, type: 'text' },
+      { question: `Did you report the damage to the courier at delivery?`, type: 'yesno' },
+      { question: `How many days after ordering did it arrive?`, type: 'text' },
+      { question: `Rate the packaging quality on arrival`, type: 'rating' },
+    ];
+  }
+  if (/temperature|cooling|cool|frost|freeze|warm|fridge|refriger/i.test(text)) {
+    return [
+      { question: `What temperature setting are you using on the appliance?`, type: 'text' },
+      { question: `Is the product placed in a well-ventilated area?`, type: 'yesno' },
+      { question: `How long after purchase did you first notice the issue?`, type: 'text' },
+      { question: `Rate the cooling performance compared to your expectations`, type: 'rating' },
+    ];
+  }
+  if (/drift|stick|analog|trigger|button|mushy|lag|input/i.test(text)) {
+    return [
+      { question: `Which specific button or control has the issue?`, type: 'text' },
+      { question: `Does the issue occur in wired mode as well?`, type: 'yesno' },
+      { question: `What games or apps do you primarily use with this controller?`, type: 'text' },
+      { question: `Rate the overall controller responsiveness`, type: 'rating' },
+    ];
+  }
+  if (/screen|display|pixel|bleed|backlight|flicker|line/i.test(text)) {
+    return [
+      { question: `Where on the screen is the issue located (center, corner, edge)?`, type: 'text' },
+      { question: `Is the issue visible at all brightness levels?`, type: 'yesno' },
+      { question: `What content were you viewing when you noticed it?`, type: 'text' },
+      { question: `Rate the overall display quality excluding this issue`, type: 'rating' },
+    ];
+  }
+
+  // Generic fallback
   return [
     { question: `How satisfied are you with ${label} overall?`, type: 'rating' },
     { question: `Was ${label} the main factor in your rating?`, type: 'yesno' },
@@ -32,18 +101,34 @@ function buildFallbackQuestions(features) {
 }
 
 async function generateSurveyQuestions(productName, normalizedText, features) {
-  const prompt = `A customer left this product review for "${productName}":
+  const featureKeys = Object.keys(features || {});
+  const featureDetails = featureKeys.map(k => {
+    const f = features[k];
+    return `${k}: sentiment=${f?.sentiment || 'unknown'}, score=${f?.score || f?.similarity_score || 'N/A'}`;
+  }).join('; ');
+
+  const prompt = `You are a product quality investigator. A customer left this review for "${productName}":
 "${normalizedText}"
 
-Detected product features mentioned: ${JSON.stringify(features)}
+Detected product features: ${featureDetails || 'none detected'}
 
-Generate exactly 4 short survey questions (max 12 words each) to validate 
-and clarify the customer's experience with these specific product features. 
-Make questions concrete and relevant to what they actually mentioned.
+Your job: Identify the SPECIFIC issue the customer experienced and generate 4 diagnostic follow-up questions that help the company understand the ROOT CAUSE.
 
-Return ONLY a valid JSON array, no markdown, no explanation:
+Rules for question generation:
+- If the product malfunctioned (exploded, stopped working, broke): Ask about usage conditions, environment, duration of use, and whether there was physical damage
+- If there's a connectivity issue (Bluetooth, WiFi, pairing): Ask about their device model, OS version, Bluetooth/WiFi version, distance, and interference
+- If battery/charging is the complaint: Ask about usage patterns (ANC on, volume level), charge cycles, and expected vs actual battery life
+- If sound/audio quality is the issue: Ask about content type, volume level, and comparison to other devices
+- If delivery/packaging is the complaint: Ask about courier handling, delivery timeline, and whether the product itself was affected
+- If temperature/cooling is mentioned (for appliances): Ask about thermostat settings, ventilation, and ambient conditions
+- If controller drift/buttons are the issue: Ask which specific control, wired vs wireless, and firmware version
+- If display issues (dead pixels, backlight bleed): Ask about screen location, brightness levels, and content type
+
+Generate exactly 4 SHORT questions (max 15 words each). Make them feel like a concerned support agent investigating the issue, not a generic survey.
+
+Return ONLY valid JSON array, no markdown:
 [
-  {"question": "...", "type": "rating"},
+  {"question": "...", "type": "text"},
   {"question": "...", "type": "yesno"},
   {"question": "...", "type": "text"},
   {"question": "...", "type": "rating"}
@@ -51,7 +136,7 @@ Return ONLY a valid JSON array, no markdown, no explanation:
 
   const key = process.env.GEMINI_API_KEY;
   if (!key) {
-    return buildFallbackQuestions(features);
+    return buildFallbackQuestions(features, normalizedText);
   }
 
   try {
@@ -65,17 +150,17 @@ Return ONLY a valid JSON array, no markdown, no explanation:
     const cleaned = stripCodeFences(text);
     const parsed = JSON.parse(cleaned);
     if (!Array.isArray(parsed) || parsed.length < 4) {
-      return buildFallbackQuestions(features);
+      return buildFallbackQuestions(features, normalizedText);
     }
-    const expectedTypes = ['rating', 'yesno', 'text', 'rating'];
+    const expectedTypes = ['text', 'yesno', 'text', 'rating'];
     const four = parsed.slice(0, 4).map((q, i) => ({
       question: String(q.question || `Question ${i + 1}`).slice(0, 500),
-      type: expectedTypes[i],
+      type: q.type || expectedTypes[i],
     }));
     return four;
   } catch (err) {
     console.warn(`[Stage 7] Gemini question generation failed: ${err.message}`);
-    return buildFallbackQuestions(features);
+    return buildFallbackQuestions(features, normalizedText);
   }
 }
 

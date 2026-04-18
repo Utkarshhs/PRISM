@@ -31,8 +31,20 @@ function emitSurveySummary(payload) {
   }
 }
 
+function emitNewReview(payload) {
+  if (io) {
+    io.emit('review:new', payload);
+  }
+}
+
+function emitReviewProcessed(payload) {
+  if (io) {
+    io.emit('review:processed', payload);
+  }
+}
+
 function getIO() {
   return io;
 }
 
-module.exports = { initSocket, emitAlert, emitSurveySummary, getIO };
+module.exports = { initSocket, emitAlert, emitSurveySummary, emitNewReview, emitReviewProcessed, getIO };
