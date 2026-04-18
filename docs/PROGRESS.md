@@ -11,9 +11,7 @@
 _Update this after every session. Replace previous entry._
 
 ```
-Date: —
-Done: —
-Next: —
+
 ```
 
 ---
@@ -32,6 +30,57 @@ Next: —
 ## BACKEND (`server/`)
 
 ### Setup
+<<<<<<< HEAD
+- [x] `package.json` with deps: express, sequelize, sqlite3, socket.io, jsonwebtoken, cookie-parser, axios, @xenova/transformers, natural, uuid
+- [x] `index.js` — Express app, middleware, route mounting, Socket.io init, SQLite sync, embedding preload
+- [x] DB schema created via Sequelize sync (Reviews, GraphNodes, GraphEdges, Insights, Alerts tables)
+- [x] `.env.example` committed (no real keys)
+- [x] `config/db.js` — SQLite via Sequelize
+- [x] `config/auth.config.js` — demo credentials
+- [x] Server startup verified — DB syncs, port binds, all 27 modules load ✅
+
+### Auth
+- [x] `middleware/authMiddleware.js` — JWT validation, cookie extraction, route protection
+- [x] `routes/auth.js` — POST /api/auth/login, POST /api/auth/logout, GET /api/auth/me
+- [x] Auth bug fixed: GET /me now uses authMiddleware directly (was bypassed because auth routes skip global middleware)
+- [x] Auth flow tested: login ✓, wrong creds 401 ✓, /me with cookie ✓, /me without cookie 401 ✓, logout ✓
+
+### Routes
+- [x] `routes/reviews.js` — POST /api/reviews/ingest, GET /api/reviews/:productId (paginated)
+- [x] `routes/dashboard.js` — GET /api/dashboard/:productId, GET /api/dashboard/all
+- [x] `routes/alerts.js` — GET /api/alerts
+- [x] `routes/demo.js` — POST /api/demo/run (SSE streaming)
+- [x] `routes/reports.js` — POST /api/reports/generate (wired to pdf.js, generates real report)
+
+### Pipeline
+- [x] `pipeline/embeddings.js` — all-MiniLM-L6-v2 via @xenova/transformers, anchor caching, cosine similarity
+- [x] `pipeline/normalize.js` — Stage 1: Sarvam AI translation with fallback
+- [x] `pipeline/trust.js` — Stage 2: hash dedup, cosine near-dedup (>0.92), spam heuristics
+- [x] `pipeline/extract.js` — Stage 3: embedding feature detection (7 features), per-feature sentiment, ambiguity detection
+- [x] `pipeline/graph.js` — Stage 4: node creation, edge weight formula, BFS cluster classification
+- [x] `pipeline/timeseries.js` — Stage 5: weekly aggregation, trend direction, spike detection
+- [x] `pipeline/confidence.js` — Stage 6: confidence formula with ambiguity penalty, coherence bonus, recommendation map
+- [x] `pipeline/feedback.js` — Stage 7: Gemini survey generation with fallback
+- [x] `pipeline/index.js` — orchestrator: runs all 7 stages, alert creation, Socket.io emit
+
+### Utils
+- [x] `utils/socket.js` — Socket.io setup, alert:new emitter
+- [x] `utils/pdf.js` — HTML report generator with Puppeteer PDF support + graceful HTML fallback. 5-section consulting-style report.
+
+### Models
+- [x] `models/Review.js`
+- [x] `models/GraphNode.js`
+- [x] `models/GraphEdge.js`
+- [x] `models/Insight.js`
+- [x] `models/Alert.js`
+- [x] `models/index.js`
+
+### Verification
+- [x] 27/27 module require() checks pass
+- [x] SQLite DB syncs and creates all tables
+- [x] Server binds to port successfully
+- [x] 17/17 API integration tests pass (auth, protected routes, review ingest)
+=======
 - [ ] `package.json` with deps: express, sequelize/prisma, pg, redis, socket.io, axios, puppeteer
 - [ ] `index.js` — Express app, middleware, route mounting, Socket.io init
 - [ ] DB schema created and migrated (Reviews, GraphNodes, Insights, Alerts, SurveyResponses tables)
@@ -56,6 +105,7 @@ Next: —
 ### Utils
 - [ ] `utils/pdf.js` — Puppeteer PDF renderer, 5-section structure
 - [ ] `utils/socket.js` — Socket.io setup, alert:new emitter
+>>>>>>> main
 
 ---
 
@@ -64,11 +114,20 @@ Next: —
 ### Setup
 - [ ] Vite + React project initialized
 - [ ] Tailwind CSS configured
+<<<<<<< HEAD
+- [ ] Dependencies: recharts, d3, framer-motion, socket.io-client, zustand
+- [ ] `src/api/index.js` — all fetch functions wrapping backend endpoints
+
+### Pages
+- [ ] `AuthPage.jsx` — login page (working)
+- [ ] `MainPage.jsx` — single page with component stubs for frontend team
+=======
 - [ ] Dependencies: recharts, d3, framer-motion, socket.io-client, zustand (or redux)
 - [ ] `src/api/index.js` — all fetch functions wrapping backend endpoints
 
 ### Pages
 - [ ] `MainPage.jsx` — single page, contains all sections including Demo Center as final section. Exact section order/layout TBD by frontend team during build.
+>>>>>>> main
 
 ### Dashboard Components
 - [ ] `HealthScoreCard`
